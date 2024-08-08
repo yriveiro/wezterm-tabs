@@ -172,7 +172,7 @@ wezterm.on(
           },
         },
         { Foreground = { Color = tab_bar.background } },
-        { Text = M.arrow_solid },
+        { Text = config.ui.separators.arrow_solid_left },
       }
     end
 
@@ -180,10 +180,10 @@ wezterm.on(
       format_item = {
         { Background = { Color = inactive_bg } },
         { Foreground = { Color = inactive_fg } },
-        { Text = ' ' .. tab_idx .. ' ' .. M.arrow_thin .. title },
+        { Text = ' ' .. tab_idx .. ' ' .. config.ui.separators.arrow_thin_left .. title },
         { Background = { Color = tab_bar.background } },
         { Foreground = { Color = tab_bar.inactive_tab.bg_color } },
-        { Text = M.arrow_solid },
+        { Text = config.ui.separators.arrow_solid_left },
         {
           Background = {
             Color = tab.is_active and tab_bar.active_tab.bg_color
@@ -192,25 +192,29 @@ wezterm.on(
           },
         },
         { Foreground = { Color = tab_bar.background } },
-        { Text = M.arrow_solid },
+        { Text = config.ui.separators.arrow_solid_left },
       }
     elseif is_last then
       format_item = {
         { Background = { Color = inactive_bg } },
         { Foreground = { Color = inactive_fg } },
-        { Text = ' ' .. tab_idx .. ' ' .. M.arrow_thin .. title },
+        {
+          Text = ' ' .. tab_idx .. ' ' .. config.ui.separators.arrow_thin_left .. title,
+        },
         { Background = { Color = tab_bar.background } },
         { Foreground = { Color = tab_bar.inactive_tab.bg_color } },
         { Text = M.arrow_solid },
         { Background = { Color = tab_bar.background } },
         { Foreground = { Color = tab_bar.background } },
-        { Text = M.arrow_solid },
+        { Text = config.ui.separators.arrow_solid_left },
       }
     else
       format_item = {
         { Background = { Color = inactive_bg } },
         { Foreground = { Color = inactive_fg } },
-        { Text = ' ' .. tab_idx .. ' ' .. M.arrow_thin .. title },
+        {
+          Text = ' ' .. tab_idx .. ' ' .. config.ui.separators.arrow_thin_left .. title,
+        },
         { Background = { Color = tab_bar.background } },
         { Foreground = { Color = tab_bar.inactive_tab.bg_color } },
         { Text = M.arrow_solid },
@@ -221,7 +225,7 @@ wezterm.on(
           },
         },
         { Foreground = { Color = tab_bar.background } },
-        { Text = M.arrow_solid },
+        { Text = config.ui.separators.arrow_solid_left },
       }
     end
 
