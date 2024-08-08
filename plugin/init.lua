@@ -1,3 +1,5 @@
+---@diagnostic disable: undefined-field
+---
 local ipairs = ipairs
 local string = string
 
@@ -69,22 +71,20 @@ local config = {
 ---@param tab MuxTabObj
 ---@return string title Title for the tab
 local function tab_title(tab, max_width)
-  local title = tab:get_title()
-
-  title = (title and #title > 0) and title or tab:active_pane():get_title()
-
+  local title = (tab.tab_title and #tab.tab_title > 0) and tab.tab_title
+    or tab.active_pane.title
   local process, custom = title:match '^(%S+)%s*%-?%s*%s*(.*)$'
   local icon = ''
 
   local proc = string.lower(process)
 
-  if config.ui.icons[proc] then
+  if config.ui.iicons[proc] then
     icon = (config.ui.icons[proc] or wezterm.nerdfonts.cod_workspace_unknown) .. ' '
   end
 
   local is_zoomed = false
 
-  for _, pane in ipairs(tab:panes_with_info()) do
+  for _, pane in ipairs(tab.panes) do
     if pane.is_zoomed then
       is_zoomed = true
       break
@@ -104,7 +104,18 @@ local function tab_title(tab, max_width)
   return ' ' .. icon .. title .. ' '
 end
 
---- Returns the current tab index
+function tab_current_idx(tabs, tab)
+  local tab_idx = 1
+
+  for i, t in ipairs(tabs) do
+    if t.tab_id == tab.tab_id then
+      tab_idx = i
+      break
+    end
+  end
+
+  return tab_idx
+end --- Returns the current tab index
 ---@package
 ---@nodiscard
 ---@param tab MuxTabObj
