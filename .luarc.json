@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json",
+  "diagnostics": {
+    "disable": ["unused-local"]
+  },
+  "runtime": {
+    "version": "Lua 5.4",
+    "path": ["plugin/?.lua"],
+    "pathStrict": true
+  }
+}
