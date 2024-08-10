@@ -37,10 +37,10 @@ local config = {
   },
   ui = {
     separators = {
-      arrow_solid_left = ' \u{e0b0}',
-      arrow_solid_right = ' \u{e0b2}',
-      arrow_thin_left = ' \u{e0b1}',
-      arrow_thin_right = ' \u{e0b3}',
+      arrow_solid_left = '\u{e0b0}',
+      arrow_solid_right = '\u{e0b2}',
+      arrow_thin_left = '\u{e0b1}',
+      arrow_thin_right = '\u{e0b3}',
     },
     icons = {
       ['debug'] = wezterm.nerdfonts.cod_debug_console,
@@ -78,7 +78,7 @@ local function tab_title(tab, max_width)
 
   local proc = string.lower(process)
 
-  if config.ui.iicons[proc] then
+  if config.ui.icons[proc] then
     icon = (config.ui.icons[proc] or wezterm.nerdfonts.cod_workspace_unknown) .. ' '
   end
 
@@ -104,18 +104,7 @@ local function tab_title(tab, max_width)
   return ' ' .. icon .. title .. ' '
 end
 
-function tab_current_idx(tabs, tab)
-  local tab_idx = 1
-
-  for i, t in ipairs(tabs) do
-    if t.tab_id == tab.tab_id then
-      tab_idx = i
-      break
-    end
-  end
-
-  return tab_idx
-end --- Returns the current tab index
+--- Returns the current tab index
 ---@package
 ---@nodiscard
 ---@param tab MuxTabObj
@@ -173,7 +162,7 @@ wezterm.on(
         { Background = { Color = active_bg } },
         { Foreground = { Color = active_fg } },
         { Attribute = { Intensity = 'Bold' } },
-        { Text = ' ' .. tab_idx .. ' ' .. config.ui.separators.arrow_thin_left .. title },
+        { Text = ' ' .. tab_idx .. config.ui.separators.arrow_thin_left .. title },
         { Background = { Color = tab_bar.background } },
         { Foreground = { Color = tab_bar.active_tab.bg_color } },
         { Text = config.ui.separators.arrow_solid_left },
@@ -214,7 +203,7 @@ wezterm.on(
         },
         { Background = { Color = tab_bar.background } },
         { Foreground = { Color = tab_bar.inactive_tab.bg_color } },
-        { Text = M.arrow_solid },
+        { Text = config.ui.separators.arrow_solid_left },
         { Background = { Color = tab_bar.background } },
         { Foreground = { Color = tab_bar.background } },
         { Text = config.ui.separators.arrow_solid_left },
@@ -228,7 +217,7 @@ wezterm.on(
         },
         { Background = { Color = tab_bar.background } },
         { Foreground = { Color = tab_bar.inactive_tab.bg_color } },
-        { Text = M.arrow_solid },
+        { Text = config.ui.separators.arrow_solid_left },
         {
           Background = {
             Color = next_tab.is_active and tab_bar.active_tab.bg_color
