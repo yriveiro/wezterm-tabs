@@ -43,7 +43,7 @@ In this example, we are configuring the position of the tab bar.
 
 > [!NOTE]
 > This plugin uses Retro Bar appearance to work, that means you need to have
-> configured the `tab_bar` [color properties](https://github.com/wez/wezterm/blob/56a27e93a9ee50aab50ff4d78308f9b3154b5122/docs/config/appearance.md?plain=1#L319)
+> configured the `tab_bar` [color properties](https://wezfurlong.org/wezterm/config/appearance.html#retro-tab-bar-appearance)
 
 ```lua
 config.colors = {
