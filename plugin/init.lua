@@ -129,13 +129,13 @@ local M = {}
 ---@param wezterm_config Config
 ---@param opts? WeztermTabConfig
 function M.apply_to_config(wezterm_config, opts)
+  config = tableMerge(config, opts or {})
+
   wezterm_config.use_fancy_tab_bar = config.tabs.use_fancy_tab_bar
   wezterm_config.tab_bar_at_bottom = config.tabs.tab_bar_at_bottom
   wezterm_config.hide_tab_bar_if_only_one_tab = config.tabs.hide_tab_bar_if_only_one_tab
   wezterm_config.tab_max_width = config.tabs.tab_max_width
   wezterm_config.unzoom_on_switch_pane = config.tabs.unzoom_on_switch_pane
-
-  config = tableMerge(config, opts or {})
 end
 
 wezterm.on(
