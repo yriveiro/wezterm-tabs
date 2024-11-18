@@ -123,50 +123,102 @@ config.colors = {
 
 # Available configurations
 
-- *tabs*: Configures some of the properties of the tab.
-- *ui*: Allows to configure the separators between tabs.
-- *icons*: If the process running is supported, it will show a icon.
+## Tabs Section
 
-The current defaults are:
+Controls the basic behavior and appearance of tabs.
 
 ```lua
+tabs = {
+  -- Position the tab bar at the bottom of the window
+  tab_bar_at_bottom = true,
 
-local config = {
-  tabs = {
-    tab_bar_at_bottom = true,
-    hide_tab_bar_if_only_one_tab = false,
-    tab_max_width = 32,
-    unzoom_on_switch_pane = true,
-  },
-  ui = {
-    separators = {
-      arrow_solid_left = '\u{e0b0}',
-      arrow_solid_right = '\u{e0b2}',
-      arrow_thin_left = '\u{e0b1}',
-      arrow_thin_right = '\u{e0b3}',
-    },
-    icons = {
-      ['debug'] = wezterm.nerdfonts.cod_debug_console,
-      ['bash'] = wezterm.nerdfonts.cod_terminal_bash,
-      ['cargo'] = wezterm.nerdfonts.dev_rust,
-      ['curl'] = wezterm.nerdfonts.md_waves,
-      ['docker'] = wezterm.nerdfonts.linux_docker,
-      ['docker-compose'] = wezterm.nerdfonts.linux_docker,
-      ['gh'] = wezterm.nerdfonts.dev_github_badge,
-      ['git'] = wezterm.nerdfonts.dev_git,
-      ['go'] = wezterm.nerdfonts.seti_go,
-      ['kubectl'] = wezterm.nerdfonts.linux_docker,
-      ['lua'] = wezterm.nerdfonts.seti_lua,
-      ['make'] = wezterm.nerdfonts.seti_makefile,
-      ['node'] = wezterm.nerdfonts.md_hexagon,
-      ['nvim'] = wezterm.nerdfonts.custom_vim,
-      ['sudo'] = wezterm.nerdfonts.fa_hashtag,
-      ['vim'] = wezterm.nerdfonts.dev_vim,
-      ['wget'] = wezterm.nerdfonts.md_arrow_down_box,
-      ['zsh'] = wezterm.nerdfonts.dev_terminal,
-    },
-  },
+  -- Controls visibility of the tab bar when only one tab exists
+  hide_tab_bar_if_only_one_tab = false,
+
+  -- Maximum width of each tab in cells
+  tab_max_width = 32,
+
+  -- Whether to restore zoom level when switching panes
+  unzoom_on_switch_pane = true,
 }
+```
+
+## UI Section
+
+Defines various UI elements including separators and program-specific icons.
+
+### Separators
+
+Custom Unicode characters for tab separators:
+
+```lua
+ui.separators = {
+  -- Powerline-style solid arrow pointing left
+  arrow_solid_left = '\u{e0b0}',
+
+  -- Powerline-style solid arrow pointing right
+  arrow_solid_right = '\u{e0b2}',
+
+  -- Powerline-style thin arrow pointing left
+  arrow_thin_left = '\u{e0b1}',
+
+  -- Powerline-style thin arrow pointing right
+  arrow_thin_right = '\u{e0b3}',
+}
+```
+
+### Icons
+
+Program-specific icons using Nerd Fonts:
+
+```lua
+ui.icons = {
+  -- Development Tools
+  ['debug'] = wezterm.nerdfonts.cod_debug_console,
+  ['cargo'] = wezterm.nerdfonts.dev_rust,
+  ['git'] = wezterm.nerdfonts.dev_git,
+  ['go'] = wezterm.nerdfonts.seti_go,
+  ['lua'] = wezterm.nerdfonts.seti_lua,
+  ['node'] = wezterm.nerdfonts.md_hexagon,
+  
+  -- Shells and Terminals
+  ['bash'] = wezterm.nerdfonts.cod_terminal_bash,
+  ['zsh'] = wezterm.nerdfonts.dev_terminal,
+  
+  -- Text Editors
+  ['nvim'] = wezterm.nerdfonts.custom_vim,
+  ['vim'] = wezterm.nerdfonts.dev_vim,
+  
+  -- Container and Cloud Tools
+  ['docker'] = wezterm.nerdfonts.linux_docker,
+  ['docker-compose'] = wezterm.nerdfonts.linux_docker,
+  ['kubectl'] = wezterm.nerdfonts.linux_docker,
+  
+  -- Utilities
+  ['curl'] = wezterm.nerdfonts.md_waves,
+  ['gh'] = wezterm.nerdfonts.dev_github_badge,
+  ['make'] = wezterm.nerdfonts.seti_makefile,
+  ['sudo'] = wezterm.nerdfonts.fa_hashtag,
+  ['wget'] = wezterm.nerdfonts.md_arrow_down_box,
+  ['lazygit'] = wezterm.nerdfonts.dev_github_alt,
+}
+```
+
+### Tab Settings
+
+Configuration for tab-specific UI elements:
+
+```lua
+ui.tab = {
+  zoom_indicator = {
+    -- Enable zoom level indicator
+    enabled = true,
+    -- Display type of the zoom indicator
+    type = 'icon',
+  }
+}
+```
+
 ```
 
 # Usage
