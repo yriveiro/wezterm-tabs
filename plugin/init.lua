@@ -1,7 +1,63 @@
+---@meta
+
+--[[ 
+@module 'wezterm-tabs'
+@description A module for configuring and customizing Wezterm's tab bar appearance and behavior
+
+This module provides functionality to:
+- Configure tab bar position, visibility, and dimensions
+- Customize tab appearance with icons and indicators
+- Handle zoomed panes and multi-pane tabs
+- Apply consistent styling across the tab bar
+
+@example Basic usage:
+```lua
+...
+
+wezterm.plugin
+  .require('https://github.com/yriveiro/wezterm-tabs')
+  .apply_to_config(config)
+
+...
+```
+
+@example Custom configuration:
+```lua
+...
+
+wezterm.plugin
+  .require('https://github.com/yriveiro/wezterm-tabs')
+  .apply_to_config(config) {
+    tabs = {
+      tab_bar_at_bottom = true,
+      hide_tab_bar_if_only_one_tab = false,
+      tab_max_width = 32
+    },
+    ui = {
+      tab = {
+        zoom_indicator = {
+          enabled = true,
+          type = 'icon'
+        }
+      }
+    }
+  }
+)
+
+...
+```
+]]
+
 ---@diagnostic disable: undefined-field
----
+
 local ipairs = ipairs
-local string = string
+local pairs = pairs
+local type = type
+local assert = assert
+local tostring = tostring
+local lower = string.lower
+local match = string.match
+local format = string.format
 
 ---@class Config: Wezterm
 local wezterm = require 'wezterm'
@@ -26,7 +82,37 @@ local function tableMerge(t1, t2)
   return t1
 end
 
+---@alias ZoomIndicatorType "icon" | "number"
+
 ---@class WeztermTabConfig
+---@field tabs TabConfiguration Configuration for tab bar behavior
+---@field ui UIConfiguration Configuration for visual elements
+
+---@class TabConfiguration
+---@field tab_bar_at_bottom boolean Whether to place the tab bar at the bottom of the window
+---@field hide_tab_bar_if_only_one_tab boolean Whether to hide the tab bar when only one tab exists
+---@field tab_max_width number Maximum width of a tab in characters
+---@field unzoom_on_switch_pane boolean Whether to unzoom when switching between panes
+
+---@class UIConfiguration
+---@field separators SeparatorConfig Visual separators used in the tab bar
+---@field icons table<string, string> Process-specific icons for tabs
+---@field tab TabUIConfig Tab-specific UI configuration
+
+---@class SeparatorConfig
+---@field arrow_solid_left string Unicode character for solid left arrow
+---@field arrow_solid_right string Unicode character for solid right arrow
+---@field arrow_thin_left string Unicode character for thin left arrow
+---@field arrow_thin_right string Unicode character for thin right arrow
+
+---@class TabUIConfig
+---@field zoom_indicator ZoomIndicatorConfig Configuration for the zoom indicator
+
+---@class ZoomIndicatorConfig
+---@field enabled boolean Whether to show zoom indicators
+---@field type ZoomIndicatorType Type of zoom indicator to display
+
+---@type WeztermTabConfig
 local config = {
   tabs = {
     tab_bar_at_bottom = true,
@@ -60,19 +146,38 @@ local config = {
       ['vim'] = wezterm.nerdfonts.dev_vim,
       ['wget'] = wezterm.nerdfonts.md_arrow_down_box,
       ['zsh'] = wezterm.nerdfonts.dev_terminal,
+      ['lazygit'] = wezterm.nerdfonts.dev_github_alt,
+    },
+    tab = {
+      zoom_indicator = {
+        enabled = false,
+        type = 'icon',
+      },
     },
   },
 }
 
+--- Safe title parsing with error handling
+---@package
+---@nodiscard
+---@param title string The raw tab title to parse
+---@return string process The detected process name
+---@return string custom Any custom title text
+local function parse_title(title)
+  local process, custom = title:match '^(%S+)%s*%-?%s*%s*(.*)$'
+  return process or 'unknown', custom or ''
+end
+
 --- Returns the title for the tab
 ---@package
 ---@nodiscard
----@param tab MuxTabObj
+---@param tab MuxTabObj The tab object to get the title for
+---@param max_width integer Maximum width for the title
 ---@return string title Title for the tab
 local function tab_title(tab, max_width)
   local title = (tab.tab_title and #tab.tab_title > 0) and tab.tab_title
     or tab.active_pane.title
-  local process, custom = title:match '^(%S+)%s*%-?%s*%s*(.*)$'
+  local process, custom = parse_title(title)
   local icon = ''
 
   local proc = string.lower(process)
@@ -81,21 +186,8 @@ local function tab_title(tab, max_width)
     icon = (config.ui.icons[proc] or wezterm.nerdfonts.cod_workspace_unknown) .. ' '
   end
 
-  local is_zoomed = false
-
-  for _, pane in ipairs(tab.panes) do
-    if pane.is_zoomed then
-      is_zoomed = true
-      break
-    end
-  end
-
   if custom ~= '' then
     title = custom
-  end
-
-  if is_zoomed then -- or (#tab.panes > 1 and not tab.is_active) then
-    title = ' ' .. title
   end
 
   title = wezterm.truncate_right(title, max_width - 3)
@@ -106,28 +198,121 @@ end
 --- Returns the current tab index
 ---@package
 ---@nodiscard
----@param tab MuxTabObj
----@param tabs MuxTabObj[]
----@return number tab_index
+---@param tabs MuxTabObj[] Array of all tabs
+---@param tab MuxTabObj The tab to find the index for
+---@return number tab_index The 1-based index of the tab
 local function tab_current_idx(tabs, tab)
-  local tab_idx = 1
+  local idx = 0
 
   for i, t in ipairs(tabs) do
     if t.tab_id == tab.tab_id then
-      tab_idx = i
+      idx = i
       break
     end
   end
 
-  return tab_idx
+  wezterm.log_error 'tab not found'
+
+  return idx
 end
+
+--- Generates the tab metadata including zoom indicator
+---@param idx number The tab index
+---@param tab MuxTabObj The tab object
+---@return string The formatted tab metadata
+local function tab_current_meta(idx, tab)
+  -- Early return if zoom indicator is disabled
+  if not config.ui.tab.zoom_indicator.enabled then
+    return tostring(idx)
+  end
+
+  -- Get pane information once
+  local mux_tab = wezterm.mux.get_tab(tab.tab_id)
+  local panes = mux_tab:panes_with_info()
+  local npanes = #panes
+
+  -- Early return for single pane
+  if npanes == 1 then
+    return tostring(idx)
+  end
+
+  -- Cache subscript characters
+  local subscript = {
+    [1] = '₁',
+    [2] = '₂',
+    [3] = '₃',
+    [4] = '₄',
+    [5] = '₅',
+    [6] = '₆',
+    [7] = '₇',
+    [8] = '₈',
+    [9] = '₉',
+    [10] = 'x',
+  }
+
+  -- Check for zoomed pane
+  local is_zoomed = false
+  for _, pane in ipairs(panes) do
+    if pane.is_zoomed then
+      is_zoomed = true
+      break
+    end
+  end
+
+  -- Handle zoomed states
+  if is_zoomed and npanes > 1 then
+    if config.ui.tab.zoom_indicator.type == 'icon' then
+      return ''
+    end
+    if config.ui.tab.zoom_indicator.type == 'number' then
+      local sub = '₍' .. (npanes > 9 and subscript[10] or subscript[npanes]) .. '₎'
+      return '' .. sub
+    end
+  end
+
+  -- Default case: show index with subscript
+  local sub = '₍' .. (npanes > 9 and subscript[10] or subscript[npanes]) .. '₎'
+  return idx .. sub
+end
+
+-- Pre-allocate format tables to reduce table creation
+local ACTIVE_FORMAT = {
+  { Background = { Color = nil } },
+  { Foreground = { Color = nil } },
+  { Attribute = { Intensity = 'Bold' } },
+  { Text = nil },
+  { Background = { Color = nil } },
+  { Foreground = { Color = nil } },
+  { Text = nil },
+  { Background = { Color = nil } },
+  { Foreground = { Color = nil } },
+  { Text = nil },
+}
+
+local INACTIVE_FORMAT = {
+  { Background = { Color = nil } },
+  { Foreground = { Color = nil } },
+  { Text = nil },
+  { Background = { Color = nil } },
+  { Foreground = { Color = nil } },
+  { Text = nil },
+  { Background = { Color = nil } },
+  { Foreground = { Color = nil } },
+  { Text = nil },
+}
 
 local M = {}
 
 --- Applies configuration to Wezterm
----@param wezterm_config Config
----@param opts? WeztermTabConfig
+---@param wezterm_config Config The Wezterm configuration table to modify
+---@param opts? WeztermTabConfig Optional configuration overrides
+---@return nil
 function M.apply_to_config(wezterm_config, opts)
+  assert(type(wezterm_config) == 'table', 'wezterm_config must be a table')
+  if opts then
+    assert(type(opts) == 'table', 'opts must be a table')
+  end
+
   config = tableMerge(config, opts or {})
 
   wezterm_config.use_fancy_tab_bar = false
@@ -137,99 +322,49 @@ function M.apply_to_config(wezterm_config, opts)
   wezterm_config.unzoom_on_switch_pane = config.tabs.unzoom_on_switch_pane
 end
 
-wezterm.on(
-  'format-tab-title',
-  function(tab, tabs, panes, wezterm_config, hover, max_width)
-    local tab_bar = wezterm_config.color_schemes[wezterm_config.color_scheme].tab_bar
+wezterm.on('format-tab-title', function(tab, tabs, _, wezterm_config, _, max_width)
+  local tab_bar = wezterm_config.color_schemes[wezterm_config.color_scheme].tab_bar
+  local active_bg = tab_bar.active_tab.bg_color
+  local active_fg = tab_bar.active_tab.fg_color
+  local inactive_bg = tab_bar.inactive_tab.bg_color
+  local inactive_fg = tab_bar.inactive_tab.fg_color
+  local background = tab_bar.background
 
-    local active_bg = tab_bar.active_tab.bg_color
-    local active_fg = tab_bar.active_tab.fg_color
-    local inactive_bg = tab_bar.inactive_tab.bg_color
-    local inactive_fg = tab_bar.inactive_tab.fg_color
+  local title = tab_title(tab, max_width)
+  local tab_idx = tab_current_idx(tabs, tab)
+  local tab_meta = tab_current_meta(tab_idx, tab)
+  local is_last = tab_idx == #tabs
 
-    local title = tab_title(tab, max_width)
-    local tab_idx = tab_current_idx(tabs, tab)
+  local tab_text =
+    format(' %s %s%s', tab_meta, config.ui.separators.arrow_thin_left, title)
 
-    local is_last = tab_idx == #tabs
-    local is_first = tab_idx == 1
-    local next_tab = tabs[tab_idx + 1]
-
-    local format_item = {}
-
-    if tab.is_active then
-      return {
-        { Background = { Color = active_bg } },
-        { Foreground = { Color = active_fg } },
-        { Attribute = { Intensity = 'Bold' } },
-        { Text = ' ' .. tab_idx .. config.ui.separators.arrow_thin_left .. title },
-        { Background = { Color = tab_bar.background } },
-        { Foreground = { Color = tab_bar.active_tab.bg_color } },
-        { Text = config.ui.separators.arrow_solid_left },
-        {
-          Background = {
-            Color = is_last and tab_bar.background or tab_bar.inactive_tab.bg_color,
-          },
-        },
-        { Foreground = { Color = tab_bar.background } },
-        { Text = config.ui.separators.arrow_solid_left },
-      }
-    end
-
-    if is_first then
-      format_item = {
-        { Background = { Color = inactive_bg } },
-        { Foreground = { Color = inactive_fg } },
-        { Text = ' ' .. tab_idx .. ' ' .. config.ui.separators.arrow_thin_left .. title },
-        { Background = { Color = tab_bar.background } },
-        { Foreground = { Color = tab_bar.inactive_tab.bg_color } },
-        { Text = config.ui.separators.arrow_solid_left },
-        {
-          Background = {
-            Color = tab.is_active and tab_bar.active_tab.bg_color
-              or next_tab.is_active and tab_bar.active_tab.bg_color
-              or tab_bar.inactive_tab.bg_color,
-          },
-        },
-        { Foreground = { Color = tab_bar.background } },
-        { Text = config.ui.separators.arrow_solid_left },
-      }
-    elseif is_last then
-      format_item = {
-        { Background = { Color = inactive_bg } },
-        { Foreground = { Color = inactive_fg } },
-        {
-          Text = ' ' .. tab_idx .. ' ' .. config.ui.separators.arrow_thin_left .. title,
-        },
-        { Background = { Color = tab_bar.background } },
-        { Foreground = { Color = tab_bar.inactive_tab.bg_color } },
-        { Text = config.ui.separators.arrow_solid_left },
-        { Background = { Color = tab_bar.background } },
-        { Foreground = { Color = tab_bar.background } },
-        { Text = config.ui.separators.arrow_solid_left },
-      }
-    else
-      format_item = {
-        { Background = { Color = inactive_bg } },
-        { Foreground = { Color = inactive_fg } },
-        {
-          Text = ' ' .. tab_idx .. ' ' .. config.ui.separators.arrow_thin_left .. title,
-        },
-        { Background = { Color = tab_bar.background } },
-        { Foreground = { Color = tab_bar.inactive_tab.bg_color } },
-        { Text = config.ui.separators.arrow_solid_left },
-        {
-          Background = {
-            Color = next_tab.is_active and tab_bar.active_tab.bg_color
-              or tab_bar.inactive_tab.bg_color,
-          },
-        },
-        { Foreground = { Color = tab_bar.background } },
-        { Text = config.ui.separators.arrow_solid_left },
-      }
-    end
-
-    return format_item
+  if tab.is_active then
+    ACTIVE_FORMAT[1].Background.Color = active_bg
+    ACTIVE_FORMAT[2].Foreground.Color = active_fg
+    ACTIVE_FORMAT[4].Text = tab_text
+    ACTIVE_FORMAT[5].Background.Color = background
+    ACTIVE_FORMAT[6].Foreground.Color = active_bg
+    ACTIVE_FORMAT[7].Text = config.ui.separators.arrow_solid_left
+    ACTIVE_FORMAT[8].Background.Color = is_last and background or inactive_bg
+    ACTIVE_FORMAT[9].Foreground.Color = background
+    ACTIVE_FORMAT[10].Text = config.ui.separators.arrow_solid_left
+    return ACTIVE_FORMAT
   end
-)
+
+  local next_tab = tabs[tab_idx + 1]
+  local next_bg = is_last and background
+    or (next_tab.is_active and active_bg or inactive_bg)
+
+  INACTIVE_FORMAT[1].Background.Color = inactive_bg
+  INACTIVE_FORMAT[2].Foreground.Color = inactive_fg
+  INACTIVE_FORMAT[3].Text = tab_text
+  INACTIVE_FORMAT[4].Background.Color = background
+  INACTIVE_FORMAT[5].Foreground.Color = inactive_bg
+  INACTIVE_FORMAT[6].Text = config.ui.separators.arrow_solid_left
+  INACTIVE_FORMAT[7].Background.Color = next_bg
+  INACTIVE_FORMAT[8].Foreground.Color = background
+  INACTIVE_FORMAT[9].Text = config.ui.separators.arrow_solid_left
+  return INACTIVE_FORMAT
+end)
 
 return M
