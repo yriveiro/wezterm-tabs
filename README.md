@@ -219,8 +219,6 @@ ui.tab = {
 }
 ```
 
-```
-
 # Usage
 
 Once configured, the tab bar will automatically update with the relevant
