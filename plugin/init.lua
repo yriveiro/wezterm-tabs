@@ -82,36 +82,6 @@ local function tableMerge(t1, t2)
   return t1
 end
 
----@alias ZoomIndicatorType "icon" | "number"
-
----@class WeztermTabConfig
----@field tabs TabConfiguration Configuration for tab bar behavior
----@field ui UIConfiguration Configuration for visual elements
-
----@class TabConfiguration
----@field tab_bar_at_bottom boolean Whether to place the tab bar at the bottom of the window
----@field hide_tab_bar_if_only_one_tab boolean Whether to hide the tab bar when only one tab exists
----@field tab_max_width number Maximum width of a tab in characters
----@field unzoom_on_switch_pane boolean Whether to unzoom when switching between panes
-
----@class UIConfiguration
----@field separators SeparatorConfig Visual separators used in the tab bar
----@field icons table<string, string> Process-specific icons for tabs
----@field tab TabUIConfig Tab-specific UI configuration
-
----@class SeparatorConfig
----@field arrow_solid_left string Unicode character for solid left arrow
----@field arrow_solid_right string Unicode character for solid right arrow
----@field arrow_thin_left string Unicode character for thin left arrow
----@field arrow_thin_right string Unicode character for thin right arrow
-
----@class TabUIConfig
----@field zoom_indicator ZoomIndicatorConfig Configuration for the zoom indicator
-
----@class ZoomIndicatorConfig
----@field enabled boolean Whether to show zoom indicators
----@field type ZoomIndicatorType Type of zoom indicator to display
-
 ---@type WeztermTabConfig
 local config = {
   tabs = {
@@ -171,7 +141,7 @@ end
 --- Returns the title for the tab
 ---@package
 ---@nodiscard
----@param tab MuxTabObj The tab object to get the title for
+---@param tab TabInformation The tab object to get the title for
 ---@param max_width integer Maximum width for the title
 ---@return string title Title for the tab
 local function tab_title(tab, max_width)
@@ -198,8 +168,8 @@ end
 --- Returns the current tab index
 ---@package
 ---@nodiscard
----@param tabs MuxTabObj[] Array of all tabs
----@param tab MuxTabObj The tab to find the index for
+---@param tabs TabInformation[] Array of all tabs
+---@param tab TabInformation The tab to find the index for
 ---@return number tab_index The 1-based index of the tab
 local function tab_current_idx(tabs, tab)
   local idx = 0
@@ -211,14 +181,12 @@ local function tab_current_idx(tabs, tab)
     end
   end
 
-  wezterm.log_error 'tab not found'
-
   return idx
 end
 
 --- Generates the tab metadata including zoom indicator
 ---@param idx number The tab index
----@param tab MuxTabObj The tab object
+---@param tab TabInformation The tab object
 ---@return string The formatted tab metadata
 local function tab_current_meta(idx, tab)
   -- Early return if zoom indicator is disabled
@@ -227,7 +195,7 @@ local function tab_current_meta(idx, tab)
   end
 
   -- Get pane information once
-  local mux_tab = wezterm.mux.get_tab(tab.tab_id)
+  local mux_tab = wezterm.mux.get_tab(tab:tab_id())
   local panes = mux_tab:panes_with_info()
   local npanes = #panes
 
