@@ -195,7 +195,7 @@ local function tab_current_meta(idx, tab)
   end
 
   -- Get pane information once
-  local mux_tab = wezterm.mux.get_tab(tab:tab_id())
+  local mux_tab = wezterm.mux.get_tab(tab.tab_id)
   local panes = mux_tab:panes_with_info()
   local npanes = #panes
 
