@@ -3,7 +3,9 @@
 This project provides a configurable tab bar for [WezTerm](https://wezfurlong.org/wezterm/index.html),
 a GPU-accelerated terminal emulator.
 
-# Installation
+<p><a href="https://github.com/michaelbrusegard/awesome-wezterm"><img alt="Mentioned in Awesome WezTerm" src="https://awesome.re/mentioned-badge.svg" /></a></p>
+
+## Installation
 
 This project works with the native plugin system provided by WezTerm.
 
@@ -22,7 +24,7 @@ the status bar script:
       .apply_to_config(config)
 ```
 
-# Setup
+## Setup
 
 To customize the plugin, the method `apply_to_config` accepts a second argument
 for the plugin options.
@@ -121,9 +123,9 @@ config.colors = {
 }
 ```
 
-# Available configurations
+## Available configurations
 
-## Tabs Section
+### Tabs Section
 
 Controls the basic behavior and appearance of tabs.
 
@@ -143,11 +145,11 @@ tabs = {
 }
 ```
 
-## UI Section
+### UI Section
 
 Defines various UI elements including separators and program-specific icons.
 
-### Separators
+#### Separators
 
 Custom Unicode characters for tab separators:
 
@@ -167,7 +169,7 @@ ui.separators = {
 }
 ```
 
-### Icons
+#### Icons
 
 Program-specific icons using Nerd Fonts:
 
@@ -180,20 +182,20 @@ ui.icons = {
   ['go'] = wezterm.nerdfonts.seti_go,
   ['lua'] = wezterm.nerdfonts.seti_lua,
   ['node'] = wezterm.nerdfonts.md_hexagon,
-  
+
   -- Shells and Terminals
   ['bash'] = wezterm.nerdfonts.cod_terminal_bash,
   ['zsh'] = wezterm.nerdfonts.dev_terminal,
-  
+
   -- Text Editors
   ['nvim'] = wezterm.nerdfonts.custom_vim,
   ['vim'] = wezterm.nerdfonts.dev_vim,
-  
+
   -- Container and Cloud Tools
   ['docker'] = wezterm.nerdfonts.linux_docker,
   ['docker-compose'] = wezterm.nerdfonts.linux_docker,
   ['kubectl'] = wezterm.nerdfonts.linux_docker,
-  
+
   -- Utilities
   ['curl'] = wezterm.nerdfonts.md_waves,
   ['gh'] = wezterm.nerdfonts.dev_github_badge,
@@ -204,7 +206,7 @@ ui.icons = {
 }
 ```
 
-### Tab Settings
+#### Tab Settings
 
 Configuration for tab-specific UI elements:
 
@@ -219,15 +221,25 @@ ui.tab = {
 }
 ```
 
-# Usage
+## Usage
 
 Once configured, the tab bar will automatically update with the relevant
 information when WezTerm is running.
 
-# Contributing
+## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request with your improvements.
 
-# License
+## Type Annotations
+
+Installing [Wezterm Types](https://github.com/DrKJeff16/wezterm-types), You will unlock
+import type annotations for this project as shown below:
+
+```lua
+---@type WeztermTabs
+local tabs = wezterm.plugin.require("https://github.com/yriveiro/wezterm-tabs")
+```
+
+## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
