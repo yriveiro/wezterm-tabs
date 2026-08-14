@@ -1,3 +1,5 @@
+
+
 # WezTerm Tabs
 
 This project provides a configurable tab bar for [WezTerm](https://wezfurlong.org/wezterm/index.html),
@@ -10,7 +12,7 @@ a GPU-accelerated terminal emulator.
 This project works with the native plugin system provided by WezTerm.
 
 Modify your WezTerm configuration file (~/.config/wezterm/wezterm.lua) to include
-the status bar script:
+the tab bar plugin:
 
 ```lua
 
